@@ -3,111 +3,79 @@ package com.chatboxscrolltozoom;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.KeyCode;
-import net.runelite.api.events.FocusChanged;
+import net.runelite.api.ScriptEvent;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.InterfaceID;
+import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
-import net.runelite.client.input.KeyListener;
-import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-
-import java.awt.event.KeyEvent;
 
 @PluginDescriptor(
 	name = "Chatbox Scroll to Zoom",
 	description = "Scroll to zoom while hovering over the chatbox",
 	tags = {"chat"}
 )
-public class ChatboxScrollToZoomPlugin extends Plugin implements KeyListener {
-	private static final int CONTROL_KEY_CODE = 17;
-
-	// the correct arguments for this script were identified via inspection of
-	// the arguments of the ScriptEvent that is triggered when scrolling in
-	// the main part of the viewport
-	private static final Integer[] ZOOM_SCRIPT_ARGS = {39, -2147483646};
-
-	// the correct arguments for this script were identified via inspection of
-	// the arguments of the ScriptEvent that is triggered when scrolling in
-	// the chatbox normally
-	private static final Integer[] SCROLL_SCRIPT_ARGS = {36, 10617389, 10616888, -2147483646};
-
+public class ChatboxScrollToZoomPlugin extends Plugin {
+	// this has value 0 when the scroll-to-zoom game setting is enabled,
+	// and has value 1 when it is disabled
+	private static final int SCROLL_TO_ZOOM_VARBIT_ID = 6357;
 
 	@Inject
 	private Client client;
 
-	@Inject
-	private KeyManager keyManager;
-
 	@Override
 	protected void startUp() {
-		zoomMode();
-		keyManager.registerKeyListener(this);
+		setChatboxWidgetOnScrollWheelListener();
 	}
 
 	@Override
 	protected void shutDown() {
-		scrollMode();
-		keyManager.unregisterKeyListener(this);
+		revertChatboxWidgetOnScrollWheelListener();
 	}
 
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded) {
 		if (widgetLoaded.getGroupId() == InterfaceID.CHATBOX) {
-			zoomMode();
+			setChatboxWidgetOnScrollWheelListener();
 		}
 	}
 
-	@Subscribe
-	public void onFocusChanged(FocusChanged focusChanged) {
-		// ScrollWheelListeners still pick up scroll wheel events even when
-		// out of focus, but there is no way to pick up KeyEvents or whether
-		// a key is currently being pressed
-		// so, when focus is gained the mode is set according to whether the
-		// CONTROL key is currently being press, but while out of focus the
-		// mode will always be zoomMode
-		if (focusChanged.isFocused()) {
-			if (client.isKeyPressed(KeyCode.KC_CONTROL)) {
-				scrollMode();
-			} else {
-				zoomMode();
-			}
-		} else {
-			zoomMode();
-		}
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e) {
-		if (e.getKeyCode() == CONTROL_KEY_CODE) {
-			scrollMode();
-		}
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		if (e.getKeyCode() == CONTROL_KEY_CODE) {
-			zoomMode();
-		}
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e) {
-	}
-
-	private void scrollMode() {
+	private void setChatboxWidgetOnScrollWheelListener() {
 		Widget chatboxWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
 		if (chatboxWidget != null) {
-			chatboxWidget.setOnScrollWheelListener(SCROLL_SCRIPT_ARGS);
+			chatboxWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
+				if (client.isKeyPressed(KeyCode.KC_CONTROL) || client.getVarbitValue(SCROLL_TO_ZOOM_VARBIT_ID) == 1) {
+					runScrollScript(scriptEvent);
+				} else {
+					runZoomScript(scriptEvent);
+				}
+			});
 		}
 	}
 
-	private void zoomMode() {
+	private void revertChatboxWidgetOnScrollWheelListener() {
 		Widget chatboxWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
 		if (chatboxWidget != null) {
-			chatboxWidget.setOnScrollWheelListener(ZOOM_SCRIPT_ARGS);
+			chatboxWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
+				runScrollScript(scriptEvent);
+			});
 		}
+	}
+
+	private void runScrollScript(ScriptEvent scriptEvent) {
+		// the correct arguments for this script were identified via inspection of
+		// the arguments of the ScriptEvent that is triggered when scrolling in
+		// the chatbox normally
+		client.runScript(36, 10617389, 10616888, scriptEvent.getMouseY());
+	}
+
+	private void runZoomScript(ScriptEvent scriptEvent) {
+		// the correct arguments for this script were identified via inspection of
+		// the arguments of the ScriptEvent that is triggered when scrolling in
+		// the main part of the viewport
+		client.runScript(39, scriptEvent.getMouseY());
 	}
 }

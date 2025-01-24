@@ -2,6 +2,8 @@ package com.chatboxscrolltozoom;
 
 import javax.inject.Inject;
 import net.runelite.api.Client;
+import net.runelite.api.KeyCode;
+import net.runelite.api.events.FocusChanged;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.InterfaceID;
@@ -54,6 +56,25 @@ public class ChatboxScrollToZoomPlugin extends Plugin implements KeyListener {
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded) {
 		if (widgetLoaded.getGroupId() == InterfaceID.CHATBOX) {
+			zoomMode();
+		}
+	}
+
+	@Subscribe
+	public void onFocusChanged(FocusChanged focusChanged) {
+		// ScrollWheelListeners still pick up scroll wheel events even when
+		// out of focus, but there is no way to pick up KeyEvents or whether
+		// a key is currently being pressed
+		// so, when focus is gained the mode is set according to whether the
+		// CONTROL key is currently being press, but while out of focus the
+		// mode will always be zoomMode
+		if (focusChanged.isFocused()) {
+			if (client.isKeyPressed(KeyCode.KC_CONTROL)) {
+				scrollMode();
+			} else {
+				zoomMode();
+			}
+		} else {
 			zoomMode();
 		}
 	}

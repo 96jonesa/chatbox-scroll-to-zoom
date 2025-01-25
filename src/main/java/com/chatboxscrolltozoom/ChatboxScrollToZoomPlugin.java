@@ -15,7 +15,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 
 @PluginDescriptor(
 	name = "Chatbox Scroll to Zoom",
-	description = "Scroll to zoom while hovering over the chatbox",
+	description = "Scroll to zoom while hovering over the chatbox. Hold the CONTROL key to scroll through messages as normal.",
 	tags = {"chat"}
 )
 public class ChatboxScrollToZoomPlugin extends Plugin {

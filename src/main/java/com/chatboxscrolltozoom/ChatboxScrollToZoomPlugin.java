@@ -28,40 +28,56 @@ public class ChatboxScrollToZoomPlugin extends Plugin {
 
 	@Override
 	protected void startUp() {
-		setChatboxWidgetOnScrollWheelListener();
+		setOnScrollWheelListeners();
 	}
 
 	@Override
 	protected void shutDown() {
-		revertChatboxWidgetOnScrollWheelListener();
+		revertOnScrollWheelListeners();
 	}
 
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded widgetLoaded) {
 		if (widgetLoaded.getGroupId() == InterfaceID.CHATBOX) {
-			setChatboxWidgetOnScrollWheelListener();
+			setOnScrollWheelListeners();
 		}
 	}
 
-	private void setChatboxWidgetOnScrollWheelListener() {
-		Widget chatboxWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
-		if (chatboxWidget != null) {
-			chatboxWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
+	private void setOnScrollWheelListeners() {
+		// this is the scroll-able part of the chatbox
+		Widget chatboxMessageLinesWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
+		if (chatboxMessageLinesWidget != null) {
+			chatboxMessageLinesWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
 				if (client.isKeyPressed(KeyCode.KC_CONTROL) || client.getVarbitValue(SCROLL_TO_ZOOM_VARBIT_ID) == 1) {
 					runScrollScript(scriptEvent);
-				} else {
+				}
+			});
+		}
+
+		// this is the entirety of the chatbox
+		Widget chatboxTransparentBackgroundWidget = client.getWidget(ComponentID.CHATBOX_TRANSPARENT_BACKGROUND);
+		if (chatboxTransparentBackgroundWidget != null) {
+			chatboxTransparentBackgroundWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
+				if (!client.isKeyPressed(KeyCode.KC_CONTROL) && client.getVarbitValue(SCROLL_TO_ZOOM_VARBIT_ID) == 0) {
 					runZoomScript(scriptEvent);
 				}
 			});
 		}
 	}
 
-	private void revertChatboxWidgetOnScrollWheelListener() {
-		Widget chatboxWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
-		if (chatboxWidget != null) {
-			chatboxWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
+	private void revertOnScrollWheelListeners() {
+		// this is the scroll-able part of the chatbox
+		Widget chatboxMessageLinesWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
+		if (chatboxMessageLinesWidget != null) {
+			chatboxMessageLinesWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
 				runScrollScript(scriptEvent);
 			});
+		}
+
+		// this is the entirety of the chatbox
+		Widget chatboxTransparentBackgroundWidget = client.getWidget(ComponentID.CHATBOX_TRANSPARENT_BACKGROUND);
+		if (chatboxTransparentBackgroundWidget != null) {
+			chatboxTransparentBackgroundWidget.setOnScrollWheelListener((Object[]) null);
 		}
 	}
 

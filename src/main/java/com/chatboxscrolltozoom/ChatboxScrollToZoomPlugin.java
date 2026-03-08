@@ -5,8 +5,7 @@ import net.runelite.api.Client;
 import net.runelite.api.KeyCode;
 import net.runelite.api.ScriptEvent;
 import net.runelite.api.events.WidgetLoaded;
-import net.runelite.api.widgets.ComponentID;
-import net.runelite.api.widgets.InterfaceID;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.JavaScriptCallback;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.eventbus.Subscribe;
@@ -45,7 +44,7 @@ public class ChatboxScrollToZoomPlugin extends Plugin {
 
 	private void setOnScrollWheelListeners() {
 		// this is the scroll-able part of the chatbox
-		Widget chatboxMessageLinesWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
+		Widget chatboxMessageLinesWidget = client.getWidget(InterfaceID.Chatbox.SCROLLAREA);
 		if (chatboxMessageLinesWidget != null) {
 			chatboxMessageLinesWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
 				if (client.isKeyPressed(KeyCode.KC_CONTROL) || client.getVarbitValue(SCROLL_TO_ZOOM_VARBIT_ID) == 1) {
@@ -55,7 +54,7 @@ public class ChatboxScrollToZoomPlugin extends Plugin {
 		}
 
 		// this is the entirety of the chatbox
-		Widget chatboxTransparentBackgroundWidget = client.getWidget(ComponentID.CHATBOX_TRANSPARENT_BACKGROUND);
+		Widget chatboxTransparentBackgroundWidget = client.getWidget(InterfaceID.Chatbox.CHAT_BACKGROUND);
 		if (chatboxTransparentBackgroundWidget != null) {
 			chatboxTransparentBackgroundWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
 				if (!client.isKeyPressed(KeyCode.KC_CONTROL) && client.getVarbitValue(SCROLL_TO_ZOOM_VARBIT_ID) == 0) {
@@ -67,7 +66,7 @@ public class ChatboxScrollToZoomPlugin extends Plugin {
 
 	private void revertOnScrollWheelListeners() {
 		// this is the scroll-able part of the chatbox
-		Widget chatboxMessageLinesWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
+		Widget chatboxMessageLinesWidget = client.getWidget(InterfaceID.Chatbox.SCROLLAREA);
 		if (chatboxMessageLinesWidget != null) {
 			chatboxMessageLinesWidget.setOnScrollWheelListener((JavaScriptCallback) scriptEvent -> {
 				runScrollScript(scriptEvent);
@@ -75,7 +74,7 @@ public class ChatboxScrollToZoomPlugin extends Plugin {
 		}
 
 		// this is the entirety of the chatbox
-		Widget chatboxTransparentBackgroundWidget = client.getWidget(ComponentID.CHATBOX_TRANSPARENT_BACKGROUND);
+		Widget chatboxTransparentBackgroundWidget = client.getWidget(InterfaceID.Chatbox.CHAT_BACKGROUND);
 		if (chatboxTransparentBackgroundWidget != null) {
 			chatboxTransparentBackgroundWidget.setOnScrollWheelListener((Object[]) null);
 		}
@@ -85,7 +84,7 @@ public class ChatboxScrollToZoomPlugin extends Plugin {
 		// the correct arguments for this script were identified via inspection of
 		// the arguments of the ScriptEvent that is triggered when scrolling in
 		// the chatbox normally
-		client.runScript(36, 10617390, 10616889, scriptEvent.getMouseY());
+		client.runScript(36, InterfaceID.Chatbox.CHATSCROLLBAR, InterfaceID.Chatbox.SCROLLAREA, scriptEvent.getMouseY());
 	}
 
 	private void runZoomScript(ScriptEvent scriptEvent) {
